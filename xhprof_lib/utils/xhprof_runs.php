@@ -149,7 +149,7 @@ class XHProfRuns_Default implements iXHProfRuns {
     if (is_dir($this->dir)) {
         echo "<hr/>Existing runs:\n<ul>\n";
         $files = glob("{$this->dir}/*.{$this->suffix}");
-        usort($files, create_function('$a,$b', 'return filemtime($b) - filemtime($a);'));
+        usort($files, function($a,$b) { return filemtime($b) - filemtime($a);});
         foreach ($files as $file) {
             list($run,$source) = explode('.', basename($file));
             echo '<li><a href="' . htmlentities($_SERVER['SCRIPT_NAME'])
@@ -159,6 +159,43 @@ class XHProfRuns_Default implements iXHProfRuns {
                 . date("Y-m-d H:i:s", filemtime($file)) . "</small></li>\n";
         }
         echo "</ul>\n";
+
+        //group by source
+        $reportsBySource = array();
+        foreach ($files as $file) {
+            list($run,$source) = explode('.', basename($file));
+            $reportsBySource[$source][] = $file;
+        }
+
+        $titleTemplate = '<h3>%s</h3>';
+        $fieldsetTemplate = '<fieldset><legend>Select Run %s: </legend> %s </fieldset>';
+        $rowTemplate =
+            '<div>' .
+            '<input type="radio" id="%1$s" name="%1$s" value="%2$s" checked>' .
+            '<label for="huey"><small> %2$s: %3$s</small></label>' .
+            '</div>';
+        $buttonTemplate = '<br><button type="button" class="js__compare" data-source="%1$s">Compare %1$s</button>';
+
+        echo '<hr/><h1>Compare Runs:</h1>';
+        foreach ($reportsBySource as $source => $files) {
+            $source = htmlentities($source);
+            echo sprintf($titleTemplate, $source);
+            foreach ([1, 2] as $selection) {
+                $selectionContent = '';
+                foreach ($files as $file) {
+                    list($run, $source) = explode('.', basename($file));
+                    $selectionContent .= sprintf(
+                        $rowTemplate,
+                        $source . '_' . $selection,
+                        htmlentities($run),
+                        date("Y-m-d H:i:s", filemtime($file))
+                    );
+                }
+
+                echo sprintf($fieldsetTemplate, $selection, $selectionContent);
+            }
+            echo sprintf($buttonTemplate, $source);
+        }
     }
   }
 }

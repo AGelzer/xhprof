@@ -178,6 +178,17 @@ function ChildRowToolTip(cell, metric)
   return s;
 }
 
+function redirectToDiff(e)
+{
+  let element = e.target;
+  let source = element.dataset.source;
+  window.location.href =
+      '/index.php' +
+      '?run1=' + document.querySelector('input[name=' + source + '_1]:checked').value +
+      '&run2=' + document.querySelector('input[name=' + source + '_2]:checked').value +
+      '&source=' + source + '';
+}
+
 $(document).ready(function() {
   $('td[@metric]').tooltip(
     { bodyHandler: function() {
@@ -201,4 +212,9 @@ $(document).ready(function() {
       cur_params['symbol'] = item;
       location.search = '?' + jQuery.param(cur_params);
     });
+
+  document.querySelector('.js__compare').addEventListener('click', function(e) {
+    e.preventDefault();
+    redirectToDiff(e);
+  });
 });
